@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>مجلة أهل الدار | كتاب تفاعلي</title>
-  <meta name="description" content="Interactive Arabic book-style flipbook for مجلة أهل الدار." />
+  <meta name="description" content="Interactive Arabic real-book style flipbook for مجلة أهل الدار." />
   <style>
     :root {
       --bg-1: #07263a;
@@ -17,12 +17,11 @@
       --text-soft: rgba(255,255,255,.88);
       --spread-ratio: 2382 / 1684;
       --turn-time: 1320ms;
-      --ease-book: cubic-bezier(.2,.75,.08,1);
-      --zoom: 1;
+      --ease-book: cubic-bezier(.18,.78,.08,1);
+      --zoom: 1.14;
     }
 
     * { box-sizing: border-box; }
-
     html, body {
       margin: 0;
       height: 100%;
@@ -48,14 +47,14 @@
       display: flex;
       justify-content: flex-end;
       align-items: center;
-      padding-inline: .3rem;
+      padding-inline: .25rem;
       overflow: hidden;
     }
 
     .brand {
       display: flex;
       align-items: baseline;
-      gap: .42rem;
+      gap: .45rem;
       flex-wrap: wrap;
       justify-content: flex-end;
       text-align: right;
@@ -107,34 +106,6 @@
       isolation: isolate;
     }
 
-    .book-frame::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(180deg, rgba(255,255,255,.20), rgba(255,255,255,0));
-      pointer-events: none;
-      z-index: 9;
-    }
-
-    .book-frame::after {
-      content: "";
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      left: 50%;
-      width: 20px;
-      transform: translateX(-50%);
-      background:
-        linear-gradient(90deg,
-          rgba(0,0,0,.12) 0%,
-          rgba(255,255,255,.44) 48%,
-          rgba(0,0,0,.14) 100%);
-      opacity: .48;
-      pointer-events: none;
-      z-index: 8;
-      mix-blend-mode: multiply;
-    }
-
     .book-shadow {
       position: absolute;
       inset: auto 2.5% -10px 2.5%;
@@ -145,67 +116,136 @@
       z-index: -1;
     }
 
-    .spread-stage {
+    .book-frame::before {
+      content: "";
       position: absolute;
       inset: 0;
-      overflow: hidden;
-      background: var(--paper-edge);
-    }
-
-    .spread {
-      position: absolute;
-      inset: 0;
-      opacity: 0;
-      transform: rotateY(0deg);
-      transform-origin: right center;
-      transform-style: preserve-3d;
-      backface-visibility: hidden;
+      background: linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,0));
       pointer-events: none;
-      visibility: hidden;
+      z-index: 20;
     }
 
-    .spread img {
+    .book-frame::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      width: 26px;
+      transform: translateX(-50%);
+      background: linear-gradient(90deg, rgba(0,0,0,.16), rgba(255,255,255,.42) 48%, rgba(0,0,0,.15));
+      opacity: .46;
+      pointer-events: none;
+      mix-blend-mode: multiply;
+      z-index: 21;
+    }
+
+    .page {
+      position: absolute;
+      top: 0;
+      width: 50%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--paper);
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.03);
+      z-index: 2;
+    }
+
+    .page img {
       display: block;
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;
       background: var(--paper);
       user-select: none;
       -webkit-user-drag: none;
+    }
+
+    .page-left {
+      left: 0;
+      box-shadow: inset -14px 0 24px rgba(0,0,0,.07), inset 0 0 0 1px rgba(0,0,0,.03);
+    }
+
+    .page-right {
+      right: 0;
+      box-shadow: inset 14px 0 24px rgba(0,0,0,.07), inset 0 0 0 1px rgba(0,0,0,.03);
+    }
+
+    .turn-sheet {
+      position: absolute;
+      top: 0;
+      width: 50%;
+      height: 100%;
+      transform-style: preserve-3d;
       backface-visibility: hidden;
+      pointer-events: none;
+      display: none;
+      z-index: 12;
+      filter: drop-shadow(0 10px 16px rgba(0,0,0,.16));
     }
 
-    .spread.active {
-      opacity: 1;
-      visibility: visible;
-      z-index: 3;
+    .turn-sheet.active { display: block; }
+    .turn-sheet.next { left: 0; transform-origin: right center; transform: rotateY(0deg); }
+    .turn-sheet.prev { right: 0; transform-origin: left center; transform: rotateY(0deg); }
+    .turn-sheet.next.turning { transition: transform var(--turn-time) var(--ease-book); transform: rotateY(-180deg); }
+    .turn-sheet.prev.turning { transition: transform var(--turn-time) var(--ease-book); transform: rotateY(180deg); }
+
+    .turn-face {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      overflow: hidden;
+      background: var(--paper);
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.03);
     }
 
-    .spread.animating {
-      opacity: 1;
-      visibility: visible;
-      z-index: 5;
+    .turn-face img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: var(--paper);
+      user-select: none;
+      -webkit-user-drag: none;
     }
 
-    .spread.next-start { transform-origin: right center; transform: rotateY(92deg); opacity: .22; }
-    .spread.next-enter { transform-origin: right center; transform: rotateY(0deg); opacity: 1; transition: transform var(--turn-time) var(--ease-book), opacity 420ms ease; }
-    .spread.next-exit { transform-origin: right center; transform: rotateY(-92deg); opacity: .18; transition: transform var(--turn-time) var(--ease-book), opacity 380ms ease; }
+    .turn-face.front::after,
+    .turn-face.back::after,
+    .page-left::after,
+    .page-right::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
 
-    .spread.prev-start { transform-origin: left center; transform: rotateY(-92deg); opacity: .22; }
-    .spread.prev-enter { transform-origin: left center; transform: rotateY(0deg); opacity: 1; transition: transform var(--turn-time) var(--ease-book), opacity 420ms ease; }
-    .spread.prev-exit { transform-origin: left center; transform: rotateY(92deg); opacity: .18; transition: transform var(--turn-time) var(--ease-book), opacity 380ms ease; }
+    .page-left::after,
+    .turn-sheet.next .front::after {
+      background: linear-gradient(90deg, rgba(255,255,255,.16), transparent 22%, transparent 84%, rgba(0,0,0,.10));
+    }
+
+    .page-right::after,
+    .turn-sheet.prev .front::after {
+      background: linear-gradient(90deg, rgba(0,0,0,.10), transparent 16%, transparent 78%, rgba(255,255,255,.14));
+    }
+
+    .turn-sheet.next .back::after,
+    .turn-sheet.prev .back::after {
+      background: linear-gradient(90deg, rgba(0,0,0,.08), transparent 18%, transparent 82%, rgba(255,255,255,.12));
+    }
+
+    .turn-face.back { transform: rotateY(180deg); }
 
     .hotspot {
       position: absolute;
       top: 0;
       bottom: 0;
       width: 44%;
-      z-index: 7;
+      z-index: 18;
       background: transparent;
       border: 0;
       cursor: pointer;
     }
-
     .hotspot.next { left: 0; }
     .hotspot.prev { right: 0; }
 
@@ -213,7 +253,7 @@
       position: absolute;
       top: 50%;
       transform: translateY(-50%);
-      z-index: 12;
+      z-index: 24;
       width: clamp(42px, 4vw, 56px);
       height: clamp(42px, 4vw, 56px);
       border-radius: 999px;
@@ -265,16 +305,10 @@
       cursor: pointer;
       transition: transform .18s ease, background .18s ease;
     }
-
     .control-btn:hover { background: rgba(255,255,255,.18); transform: translateY(-1px); }
     .control-btn:active { transform: translateY(0); }
 
-    .progress {
-      display: flex;
-      align-items: center;
-      min-width: 0;
-    }
-
+    .progress { display: flex; align-items: center; min-width: 0; }
     .progress-track {
       position: relative;
       flex: 1;
@@ -284,7 +318,6 @@
       overflow: hidden;
       cursor: pointer;
     }
-
     .progress-bar {
       position: absolute;
       inset-block: 0;
@@ -313,9 +346,7 @@
       z-index: 100;
       transition: opacity .35s ease, visibility .35s ease;
     }
-
     .loading.hidden { opacity: 0; visibility: hidden; }
-
     .loading-dot {
       width: 15px;
       height: 15px;
@@ -324,25 +355,162 @@
       box-shadow: -25px 0 0 rgba(255,255,255,.44), 25px 0 0 rgba(255,255,255,.72);
       animation: pulse 1s infinite ease-in-out;
     }
-
     @keyframes pulse {
       0%,100% { transform: scale(1); opacity: 1; }
       50% { transform: scale(.82); opacity: .78; }
     }
 
+
+
+    /* Closed-book opening scene */
+    .closed-book {
+      position: absolute;
+      inset: 0;
+      z-index: 60;
+      display: grid;
+      place-items: center;
+      perspective: 2600px;
+      cursor: pointer;
+      border: 0;
+      padding: 0;
+      margin: 0;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      transition: opacity 520ms ease, visibility 520ms ease;
+    }
+
+    .closed-book::before {
+      content: "";
+      position: absolute;
+      width: min(49vw, calc((100vh - 58px) * .72));
+      max-width: 650px;
+      min-width: min(430px, 86vw);
+      aspect-ratio: 1191 / 1684;
+      border-radius: 18px;
+      background: rgba(0,0,0,.28);
+      filter: blur(22px);
+      transform: translate(12px, 16px);
+      z-index: -1;
+    }
+
+    .closed-cover-wrap {
+      position: relative;
+      width: min(48vw, calc((100vh - 58px) * .70));
+      max-width: 640px;
+      min-width: min(420px, 84vw);
+      aspect-ratio: 1191 / 1684;
+      transform-style: preserve-3d;
+    }
+
+    .closed-cover {
+      position: absolute;
+      inset: 0;
+      transform-origin: right center;
+      transform-style: preserve-3d;
+      border-radius: 14px 22px 22px 14px;
+      overflow: hidden;
+      background: #fff;
+      box-shadow:
+        0 24px 54px rgba(0,0,0,.28),
+        10px 0 24px rgba(0,0,0,.18),
+        inset -12px 0 24px rgba(0,0,0,.12),
+        inset 2px 0 0 rgba(255,255,255,.35);
+      transition: transform 1450ms var(--ease-book), opacity 620ms ease, filter 620ms ease;
+      will-change: transform;
+    }
+
+    .closed-cover img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      user-select: none;
+      -webkit-user-drag: none;
+      backface-visibility: hidden;
+    }
+
+    .closed-cover::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,.12), transparent 22%, transparent 74%, rgba(0,0,0,.18)),
+        linear-gradient(180deg, rgba(255,255,255,.16), transparent 40%);
+      mix-blend-mode: multiply;
+    }
+
+    .closed-book-hint {
+      position: absolute;
+      bottom: -2.65rem;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: .5rem .9rem;
+      border-radius: 999px;
+      background: rgba(8,32,48,.58);
+      border: 1px solid rgba(255,255,255,.16);
+      color: rgba(255,255,255,.92);
+      font-size: .9rem;
+      font-weight: 700;
+      white-space: nowrap;
+      backdrop-filter: blur(12px);
+      opacity: .92;
+    }
+
+    .app.closed .book-scale,
+    .app.closed .nav-btn,
+    .app.closed .controls {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .app.opening .book-scale,
+    .app.opened .book-scale,
+    .app.opening .nav-btn,
+    .app.opened .nav-btn,
+    .app.opening .controls,
+    .app.opened .controls {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    .app.opening .book-scale {
+      animation: bookAppear 1300ms var(--ease-book) both;
+    }
+
+    @keyframes bookAppear {
+      0% { opacity: 0; transform: scale(.88); filter: blur(1px); }
+      45% { opacity: .5; transform: scale(.98); filter: blur(.4px); }
+      100% { opacity: 1; transform: scale(var(--zoom)); filter: blur(0); }
+    }
+
+    .app.opening .closed-cover {
+      transform: rotateY(178deg) translateX(2.5%) translateZ(18px);
+      filter: brightness(.92);
+    }
+
+    .app.opening .closed-book {
+      opacity: 0;
+      visibility: hidden;
+      transition-delay: 1040ms;
+    }
+
+    .app.opened .closed-book {
+      display: none;
+    }
+
     @media (max-width: 980px) {
-      .book-scale {
-        width: 99.6vw;
-        min-width: 0;
-      }
-      .controls {
-        grid-template-columns: auto auto 1fr auto;
-      }
+      .book-scale { width: 99.6vw; min-width: 0; }
+      .closed-cover-wrap, .closed-book::before { width: min(78vw, calc((100vh - 62px) * .68)); min-width: min(320px, 82vw); }
+      .controls { grid-template-columns: auto auto 1fr auto; }
       .fullscreen-btn { display: none; }
     }
 
     @media (max-width: 720px) {
-      .app { padding: .22rem; }
+      .app { padding: .08rem .12rem .16rem; }
       .topbar { justify-content: center; }
       .brand { justify-content: center; text-align: center; }
       .brand h1 { font-size: 1rem; }
@@ -354,8 +522,8 @@
       .controls {
         width: calc(100vw - .2rem);
         grid-template-columns: auto auto 1fr auto;
-        gap: .4rem;
-        padding: .44rem .52rem;
+        gap: .35rem;
+        padding: .42rem .42rem;
       }
       .control-btn { padding: .42rem .66rem; }
       .counter { min-width: 96px; font-size: .92rem; }
@@ -372,7 +540,7 @@
     <div class="loading-dot"></div>
   </div>
 
-  <div class="app" id="app">
+  <div class="app closed" id="app">
     <header class="topbar">
       <div class="brand">
         <h1>مجلة أهل الدار</h1>
@@ -381,11 +549,25 @@
     </header>
 
     <main class="reader" aria-label="Arabic flipbook reader">
+      <button class="closed-book" id="closedBook" type="button" aria-label="Open book">
+        <span class="closed-cover-wrap">
+          <span class="closed-cover"><img src="assets/pages/page-001.png" alt="مجلة أهل الدار cover" /></span>
+          <span class="closed-book-hint">انقر لفتح الكتاب</span>
+        </span>
+      </button>
       <button class="nav-btn nav-prev" id="prevBtn" type="button" aria-label="Previous spread" title="Previous spread">›</button>
       <div class="book-scale" id="bookScale">
         <section class="book-frame" id="bookFrame">
           <div class="book-shadow"></div>
-          <div class="spread-stage" id="spreadStage"></div>
+
+          <div class="page page-left" id="leftPage"><img id="leftImg" alt="Left page" /></div>
+          <div class="page page-right" id="rightPage"><img id="rightImg" alt="Right page" /></div>
+
+          <div class="turn-sheet" id="turnSheet" aria-hidden="true">
+            <div class="turn-face front"><img id="turnFrontImg" alt="Turning page front" /></div>
+            <div class="turn-face back"><img id="turnBackImg" alt="Turning page back" /></div>
+          </div>
+
           <button class="hotspot next" id="nextHotspot" aria-label="Next spread" type="button"></button>
           <button class="hotspot prev" id="prevHotspot" aria-label="Previous spread" type="button"></button>
         </section>
@@ -408,11 +590,16 @@
 
   <script>
     const TOTAL_PAGES = 32;
-    const TOTAL_SPREADS = 16;
-    const SPREAD_PATH = n => `assets/spreads/spread-${String(n).padStart(2, '0')}.jpg`;
+    const TOTAL_SPREADS = Math.ceil(TOTAL_PAGES / 2);
+    const PAGE_PATH = n => `assets/pages/page-${String(n).padStart(3, '0')}.png`;
+    const TURN_MS = 1340;
 
     const loading = document.getElementById('loading');
-    const stage = document.getElementById('spreadStage');
+    const leftImg = document.getElementById('leftImg');
+    const rightImg = document.getElementById('rightImg');
+    const turnSheet = document.getElementById('turnSheet');
+    const turnFrontImg = document.getElementById('turnFrontImg');
+    const turnBackImg = document.getElementById('turnBackImg');
     const nextBtn = document.getElementById('nextBtn');
     const prevBtn = document.getElementById('prevBtn');
     const nextHotspot = document.getElementById('nextHotspot');
@@ -424,41 +611,57 @@
     const zoomInBtn = document.getElementById('zoomInBtn');
     const zoomOutBtn = document.getElementById('zoomOutBtn');
     const root = document.documentElement;
+    const app = document.getElementById('app');
+    const closedBook = document.getElementById('closedBook');
 
     let currentSpread = 1;
     let animating = false;
     let zoom = 1.14;
-    const spreads = [];
+    let bookOpen = false;
 
-    function createSpreads() {
-      for (let i = 1; i <= TOTAL_SPREADS; i++) {
-        const article = document.createElement('article');
-        article.className = 'spread';
-        article.dataset.index = i;
-        const img = document.createElement('img');
-        img.src = SPREAD_PATH(i);
-        img.alt = `Spread ${i} of مجلة أهل الدار`;
-        img.decoding = 'async';
-        img.loading = i <= 2 ? 'eager' : 'lazy';
-        article.appendChild(img);
-        stage.appendChild(article);
-        spreads.push(article);
-      }
-      spreads[0].classList.add('active');
+
+    function openBook() {
+      if (bookOpen || app.classList.contains('opening')) return;
+      app.classList.remove('closed');
+      app.classList.add('opening');
+      window.setTimeout(() => {
+        bookOpen = true;
+        app.classList.remove('opening');
+        app.classList.add('opened');
+        updateUI();
+      }, 1480);
     }
 
-    function spreadPageRange(index) {
-      const start = index * 2 - 1;
-      const end = Math.min(index * 2, TOTAL_PAGES);
+    function pagePair(spreadIndex) {
+      return {
+        right: Math.min(TOTAL_PAGES, spreadIndex * 2 - 1),
+        left: Math.min(TOTAL_PAGES, spreadIndex * 2)
+      };
+    }
+
+    function setImg(imgEl, pageNo) {
+      imgEl.src = PAGE_PATH(pageNo);
+      imgEl.alt = `Page ${pageNo} of مجلة أهل الدار`;
+    }
+
+    function renderSpread(spreadIndex) {
+      const pages = pagePair(spreadIndex);
+      setImg(rightImg, pages.right);
+      setImg(leftImg, pages.left);
+    }
+
+    function pageRangeLabel(spreadIndex) {
+      const start = spreadIndex * 2 - 1;
+      const end = Math.min(spreadIndex * 2, TOTAL_PAGES);
       return `${start}–${end} / ${TOTAL_PAGES}`;
     }
 
-    function progressPage(index) {
-      return index * 2 - 1;
+    function progressPage(spreadIndex) {
+      return spreadIndex * 2 - 1;
     }
 
     function updateUI() {
-      counter.textContent = spreadPageRange(currentSpread);
+      counter.textContent = pageRangeLabel(currentSpread);
       const pageNo = progressPage(currentSpread);
       progressTrack.setAttribute('aria-valuenow', pageNo);
       progressBar.style.width = `${((pageNo - 1) / (TOTAL_PAGES - 1)) * 100}%`;
@@ -466,72 +669,83 @@
       nextBtn.disabled = animating || currentSpread === TOTAL_SPREADS;
     }
 
-    function cleanClasses(el) {
-      el.classList.remove('active', 'animating', 'next-start', 'next-enter', 'next-exit', 'prev-start', 'prev-enter', 'prev-exit');
-      el.style.zIndex = '';
+    function clearTurnSheet() {
+      turnSheet.className = 'turn-sheet';
     }
 
     function goNext() {
+      if (!bookOpen) { openBook(); return; }
       if (animating || currentSpread >= TOTAL_SPREADS) return;
-      const current = spreads[currentSpread - 1];
-      const next = spreads[currentSpread];
       animating = true;
       updateUI();
 
-      next.classList.add('animating', 'next-start');
-      next.style.zIndex = '4';
-      current.classList.add('animating');
-      current.style.zIndex = '5';
+      const current = pagePair(currentSpread);
+      const next = pagePair(currentSpread + 1);
+
+      // Reveal next left page beneath the turning page.
+      setImg(leftImg, next.left);
+      // Keep current right page visible until the turn completes.
+      setImg(rightImg, current.right);
+
+      setImg(turnFrontImg, current.left);
+      setImg(turnBackImg, next.right);
+      turnSheet.className = 'turn-sheet active next';
 
       requestAnimationFrame(() => {
-        current.classList.add('next-exit');
-        next.classList.add('next-enter');
+        requestAnimationFrame(() => {
+          turnSheet.classList.add('turning');
+        });
       });
 
       window.setTimeout(() => {
-        cleanClasses(current);
-        cleanClasses(next);
-        next.classList.add('active');
         currentSpread += 1;
+        setImg(rightImg, next.right);
+        clearTurnSheet();
         animating = false;
         updateUI();
-      }, 1340);
+      }, TURN_MS);
     }
 
     function goPrev() {
+      if (!bookOpen) { openBook(); return; }
       if (animating || currentSpread <= 1) return;
-      const current = spreads[currentSpread - 1];
-      const prev = spreads[currentSpread - 2];
       animating = true;
       updateUI();
 
-      prev.classList.add('animating', 'prev-start');
-      prev.style.zIndex = '5';
-      current.classList.add('animating');
-      current.style.zIndex = '4';
+      const current = pagePair(currentSpread);
+      const prev = pagePair(currentSpread - 1);
+
+      // Reveal previous right page beneath the turning page.
+      setImg(rightImg, prev.right);
+      // Keep current left page visible until the turn completes.
+      setImg(leftImg, current.left);
+
+      setImg(turnFrontImg, current.right);
+      setImg(turnBackImg, prev.left);
+      turnSheet.className = 'turn-sheet active prev';
 
       requestAnimationFrame(() => {
-        current.classList.add('prev-exit');
-        prev.classList.add('prev-enter');
+        requestAnimationFrame(() => {
+          turnSheet.classList.add('turning');
+        });
       });
 
       window.setTimeout(() => {
-        cleanClasses(current);
-        cleanClasses(prev);
-        prev.classList.add('active');
         currentSpread -= 1;
+        setImg(leftImg, prev.left);
+        clearTurnSheet();
         animating = false;
         updateUI();
-      }, 1340);
+      }, TURN_MS);
     }
 
     function jumpToSpread(targetSpread) {
+      if (!bookOpen) { openBook(); return; }
       const clamped = Math.max(1, Math.min(TOTAL_SPREADS, targetSpread));
       if (clamped === currentSpread || animating) return;
-      spreads.forEach(cleanClasses);
-      spreads[clamped - 1].classList.add('active');
       currentSpread = clamped;
-      animating = false;
+      clearTurnSheet();
+      renderSpread(currentSpread);
       updateUI();
     }
 
@@ -547,6 +761,7 @@
       root.style.setProperty('--zoom', zoom.toFixed(2));
     }
 
+    closedBook.addEventListener('click', openBook);
     nextBtn.addEventListener('click', goNext);
     prevBtn.addEventListener('click', goPrev);
     nextHotspot.addEventListener('click', goNext);
@@ -571,13 +786,13 @@
 
     let touchStartX = 0;
     let touchStartY = 0;
-    stage.addEventListener('touchstart', e => {
+    document.getElementById('bookFrame').addEventListener('touchstart', e => {
       if (!e.changedTouches.length) return;
       touchStartX = e.changedTouches[0].clientX;
       touchStartY = e.changedTouches[0].clientY;
     }, { passive: true });
 
-    stage.addEventListener('touchend', e => {
+    document.getElementById('bookFrame').addEventListener('touchend', e => {
       if (!e.changedTouches.length) return;
       const dx = e.changedTouches[0].clientX - touchStartX;
       const dy = e.changedTouches[0].clientY - touchStartY;
@@ -599,7 +814,7 @@
     });
 
     window.addEventListener('load', () => {
-      createSpreads();
+      renderSpread(currentSpread);
       applyZoom();
       updateUI();
       window.setTimeout(() => loading.classList.add('hidden'), 250);
